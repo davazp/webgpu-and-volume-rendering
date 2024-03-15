@@ -10,6 +10,7 @@
   "keywords": [],
   "author": "David Vazquez Pua <davazp@gmail.com>",
   "devDependencies": {
+    "@webgpu/types": "^0.1.40",
     "parcel": "^2.12.0",
     "typescript": "^5.4.2"
   }
