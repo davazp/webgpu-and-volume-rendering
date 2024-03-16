@@ -19,31 +19,46 @@ async function main() {
     throw new Error(`could not initialize canvas for webgpu`);
   }
 
+  const format = navigator.gpu.getPreferredCanvasFormat();
+
   ctx.configure({
     device,
-    format: navigator.gpu.getPreferredCanvasFormat(),
+    format,
   });
-
-  const canvasTexture = ctx.getCurrentTexture();
 
   const module = device?.createShaderModule({
     code: `
 
+struct Out {
+  @builtin(position) position: vec4f,
+  @location(0) pos: vec4f
+}
+
+struct Uniforms {
+  time: f32
+}
+
+@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+
 @vertex
-fn vertex_shader (@builtin(vertex_index) index: u32) -> @builtin(position) vec4f {
+fn vertex_shader (@builtin(vertex_index) index: u32) -> Out {
 
    let points = array(
      vec4f(1,-1,0,1),
      vec4f(-1,1,0,1),
-     vec4f(-1,-1,0,1)
+     vec4f(-1,-1,0,1),
+
+     vec4f(1,-1,0,1),
+     vec4f(-1,1,0,1),
+     vec4f(1,1,0,1)
    );
 
-   return points[index];
+   return Out(points[index], points[index]);
 }
 
 @fragment
-fn fragment_shader () -> @location(0) vec4f {
-   return vec4f(.5,.5,.5,1);
+fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
+   return vec4f(abs(p.x), abs(p.y), 1, 1);
 }
 
 `,
@@ -56,33 +71,62 @@ fn fragment_shader () -> @location(0) vec4f {
     },
     fragment: {
       module,
-      targets: [
-        {
-          format: navigator.gpu.getPreferredCanvasFormat(),
-        },
-      ],
+      targets: [{ format }],
     },
   });
 
-  const encoder = device.createCommandEncoder();
+  const uniformsBuffer = device.createBuffer({
+    size: 4,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+  });
 
-  const pass = encoder.beginRenderPass({
-    colorAttachments: [
+  let tick = 10;
+
+  const bindGroup = device.createBindGroup({
+    layout: pipeline.getBindGroupLayout(0),
+    entries: [
       {
-        view: canvasTexture.createView(),
-        loadOp: "clear",
-        storeOp: "store",
+        binding: 0,
+        resource: {
+          buffer: uniformsBuffer,
+        },
       },
     ],
   });
 
-  pass.setPipeline(pipeline);
-  pass.draw(3);
-  pass.end();
+  const render = () => {
+    device.queue.writeBuffer(uniformsBuffer, 0, new Float32Array([tick]));
+    const encoder = device.createCommandEncoder();
 
-  const commandBuffer = encoder.finish();
+    const canvasTexture = ctx.getCurrentTexture();
 
-  device.queue.submit([commandBuffer]);
+    const pass = encoder.beginRenderPass({
+      colorAttachments: [
+        {
+          view: canvasTexture.createView(),
+          loadOp: "clear",
+          storeOp: "store",
+        },
+      ],
+    });
+
+    pass.setPipeline(pipeline);
+    pass.setBindGroup(0, bindGroup);
+    pass.draw(6);
+    pass.end();
+
+    const commandBuffer = encoder.finish();
+
+    device.queue.submit([commandBuffer]);
+  };
+
+  function animate() {
+    tick += 1 / 16;
+    render();
+    requestAnimationFrame(animate);
+  }
+
+  animate();
 }
 
 main();
