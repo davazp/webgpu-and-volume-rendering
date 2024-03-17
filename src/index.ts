@@ -35,7 +35,7 @@ struct Out {
 }
 
 struct Uniforms {
-  time: f32
+  tick: f32
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -58,7 +58,7 @@ fn vertex_shader (@builtin(vertex_index) index: u32) -> Out {
 
 @fragment
 fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
-   return vec4f(abs(p.x), abs(p.y), 1, 1);
+   return vec4f(uniforms.tick, abs(p.y), 1, 1);
 }
 
 `,
@@ -120,13 +120,14 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
     device.queue.submit([commandBuffer]);
   };
 
-  function animate() {
-    tick += 1 / 16;
-    render();
-    requestAnimationFrame(animate);
-  }
+  const slider = document.querySelector<HTMLInputElement>("#slider")!;
 
-  animate();
+  slider.addEventListener("input", () => {
+    tick = parseFloat(slider.value);
+    render();
+  });
+
+  render();
 }
 
 main();
