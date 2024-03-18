@@ -10,8 +10,14 @@
   "keywords": [],
   "author": "David Vazquez Pua <davazp@gmail.com>",
   "devDependencies": {
+    "@types/node": "^20.11.28",
     "@webgpu/types": "^0.1.40",
     "parcel": "^2.12.0",
+    "prettier": "^3.2.5",
     "typescript": "^5.4.2"
+  },
+  "dependencies": {
+    "dicom-parser": "^1.8.21",
+    "fast-glob": "^3.3.2"
   }
 }

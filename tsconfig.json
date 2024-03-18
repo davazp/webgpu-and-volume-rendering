@@ -4,8 +4,9 @@
     "module": "commonjs",
     "isolatedModules": true,
     "strict": true,
-    "types": ["@webgpu/types"],
+    "types": ["@webgpu/types", "@types/node"],
     "noEmit": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "noUncheckedIndexedAccess": true
   }
 }
