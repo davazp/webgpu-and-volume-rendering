@@ -44,7 +44,9 @@ struct Out {
 }
 
 struct Uniforms {
-  tick: f32
+  slice: f32,
+  level: f32,
+  width: f32
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -69,9 +71,9 @@ fn vertex_shader (@builtin(vertex_index) index: u32) -> Out {
 
 @fragment
 fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
- let pos = (p.xyz + 1.) / 2.;
- let hu = textureSample(volumeTexture, volumeSampler, pos.xyz + vec3f(0,0,uniforms.tick));
-   let gray = hu.r;
+ let pos = (p.xyz + 1.) / 2. + vec3f(0,0,uniforms.slice);
+ let hu = textureSample(volumeTexture, volumeSampler, pos.xzy).r;
+   let gray = clamp((hu - uniforms.level) / uniforms.width, 0, 1);
    return vec4f(gray, gray, gray, 1);
 }
 
@@ -109,11 +111,13 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
   });
 
   const uniformsBuffer = device.createBuffer({
-    size: 4,
+    size: Float32Array.BYTES_PER_ELEMENT * 3,
     usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
   });
 
-  let tick = 10;
+  let slice = 10;
+  let width = 400;
+  let level = -120;
 
   const bindGroup = device.createBindGroup({
     layout: pipeline.getBindGroupLayout(0),
@@ -136,7 +140,11 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
   });
 
   const render = () => {
-    device.queue.writeBuffer(uniformsBuffer, 0, new Float32Array([tick]));
+    device.queue.writeBuffer(
+      uniformsBuffer,
+      0,
+      new Float32Array([slice, level, width]),
+    );
     const encoder = device.createCommandEncoder();
 
     const canvasTexture = ctx.getCurrentTexture();
@@ -162,9 +170,22 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
   };
 
   const slider = document.querySelector<HTMLInputElement>("#slider")!;
-
   slider.addEventListener("input", () => {
-    tick = parseFloat(slider.value);
+    slice = parseFloat(slider.value);
+    render();
+  });
+
+  const sliderLevel =
+    document.querySelector<HTMLInputElement>("#slider-level")!;
+  sliderLevel.addEventListener("input", () => {
+    level = parseFloat(sliderLevel.value);
+    render();
+  });
+
+  const sliderWidth =
+    document.querySelector<HTMLInputElement>("#slider-width")!;
+  sliderWidth.addEventListener("input", () => {
+    width = parseFloat(sliderWidth.value);
     render();
   });
 
