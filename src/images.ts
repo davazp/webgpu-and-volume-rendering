@@ -1,12 +1,17 @@
-import fg from "fast-glob";
-import { loadDICOMImage } from "./dicom";
+import { ImageVolume } from "./api/types";
 
-export async function getImage1() {
-  const files = await fg(
-    "/Users/davazp/Projects/SlicerRtData/eclipse-10.0.42-fsrt-brain/CT.PYFSRT01*.dcm",
-  );
-  const image = await loadDICOMImage(files);
-  console.log(image);
+export async function getImage(): Promise<ImageVolume> {
+  const response = await fetch("/api/eclipse-10.0.42-fsrt-brain");
+  const arrayBuffer = await response.arrayBuffer();
+  const volume = new Float32Array(arrayBuffer);
+
+  const metadataRaw = response.headers.get("X-Image-Metadata");
+  if (!metadataRaw) {
+    throw new Error(`Missing metadata`);
+  }
+  const metadata = JSON.parse(metadataRaw);
+  return {
+    ...metadata,
+    volume,
+  };
 }
-
-getImage1();

@@ -1,4 +1,8 @@
+import { getImage } from "./images";
+
 async function main() {
+  const image = await getImage();
+
   const adapter = await navigator.gpu.requestAdapter();
   console.log("adapter", adapter);
 

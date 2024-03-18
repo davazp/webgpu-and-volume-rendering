@@ -1,5 +1,6 @@
 import dicomParser from "dicom-parser";
 import fs from "fs/promises";
+import { ImageVolume, Vec3 } from "./types";
 
 // https://dicom.innolitics.com/ciods/ct-image/image-pixel
 
@@ -19,9 +20,7 @@ enum Tags {
   RescaleSlope = "x00281053",
 }
 
-type Vec3 = [number, number, number];
-
-export async function loadDICOMImage(files: string[]) {
+export async function loadDICOMImage(files: string[]): Promise<ImageVolume> {
   const slices = await Promise.all(
     files.map(async (file) => {
       try {

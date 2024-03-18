@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2021",
-    "module": "commonjs",
+    "target": "es2022",
+    "module": "nodenext",
     "isolatedModules": true,
     "strict": true,
     "types": ["@webgpu/types", "@types/node"],
