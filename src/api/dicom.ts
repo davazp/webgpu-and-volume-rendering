@@ -129,6 +129,7 @@ export async function loadDICOMImage(files: string[]): Promise<ImageVolume> {
   return {
     columns,
     rows,
+    slices: slices.length,
     pixelSpacing,
     positionPatient,
     imageOrientationPatient,

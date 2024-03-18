@@ -6,7 +6,12 @@ async function main() {
   const adapter = await navigator.gpu.requestAdapter();
   console.log("adapter", adapter);
 
-  const device = await adapter?.requestDevice();
+  const device = await adapter?.requestDevice({
+    requiredFeatures: ["float32-filterable"],
+    requiredLimits: {
+      maxBufferSize: 1024 * 1024 * 1024 * 2,
+    },
+  });
   console.log("device", device);
 
   const canvas = document.querySelector<HTMLCanvasElement>("#canvas");
@@ -43,6 +48,8 @@ struct Uniforms {
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var volumeTexture: texture_3d<f32>;
+@group(0) @binding(2) var volumeSampler: sampler;
 
 @vertex
 fn vertex_shader (@builtin(vertex_index) index: u32) -> Out {
@@ -62,11 +69,33 @@ fn vertex_shader (@builtin(vertex_index) index: u32) -> Out {
 
 @fragment
 fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
-   return vec4f(uniforms.tick, abs(p.y), 1, 1);
+ let pos = (p.xyz + 1.) / 2.;
+ let hu = textureSample(volumeTexture, volumeSampler, pos.xyz + vec3f(0,0,uniforms.tick));
+   let gray = hu.r;
+   return vec4f(gray, gray, gray, 1);
 }
 
 `,
   });
+
+  const volumeSampler = device.createSampler();
+
+  const volumeTexture = device.createTexture({
+    format: "r32float",
+    dimension: "3d",
+    size: [image.columns, image.rows, image.slices],
+    usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING,
+  });
+
+  device.queue.writeTexture(
+    { texture: volumeTexture },
+    image.volume,
+    {
+      bytesPerRow: image.columns * Float32Array.BYTES_PER_ELEMENT,
+      rowsPerImage: image.rows,
+    },
+    [image.columns, image.rows, image.slices],
+  );
 
   const pipeline = device.createRenderPipeline({
     layout: "auto",
@@ -94,6 +123,14 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
         resource: {
           buffer: uniformsBuffer,
         },
+      },
+      {
+        binding: 1,
+        resource: volumeTexture.createView(),
+      },
+      {
+        binding: 2,
+        resource: volumeSampler,
       },
     ],
   });
