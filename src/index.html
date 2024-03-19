@@ -1,32 +1,33 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8"/>
+    <meta charset="utf-8" />
     <title>WebGPU And Volume Rendering Workshop</title>
     <script type="module" src="index.ts"></script>
     <style>
-      html, body {
-	  background-color: black;
+      html,
+      body {
+        background-color: black;
       }
       .canvas-container {
-	  display: flex;
+        display: flex;
       }
       canvas {
-	  margin: 0 auto;
-	  width: 600px;
-	  hegiht: 600px;
+        margin: 0 auto;
+        width: 600px;
+        height: 600px;
       }
       .controls {
-	  background-color: rgb(0, 0, 0, .5);
-	  padding: 10px;
-	  color: white;
+        background-color: rgb(0, 0, 0, 0.5);
+        padding: 10px;
+        color: white;
       }
       .controls input {
-	  width: 50%;
+        width: 50%;
       }
       .controls label {
-	  display: flex;
-	  display: block;
+        display: flex;
+        display: block;
       }
     </style>
   </head>
@@ -36,13 +37,32 @@
     </div>
 
     <div class="controls">
-      <label>Slice: <input name="slice" min="0" value="0" max="1" step="0.01" type="range" /></label>
-      <label>Bone: <input name="bone" min="0" max="5" step="0.01" type="range" /></label>
-      <label>Blood: <input name="blood" min="0" max="10" step="0.01" type="range" /></label>
-      <label>Skin: <input name="skin" min="0" max="10" step="0.01" type="range" /></label>
-      <label>Water: <input name="water" min="0" max="10" step="0.01" type="range" /></label>
-      <label>Rotate: <input name="rotate" min="0" max="3.1416" step="0.1" value="0" type="range" /></label>
+      <label
+        >Slice:
+        <input name="slice" min="0" value="0" max="1" step="0.01" type="range"
+      /></label>
+      <label
+        >Bone: <input name="bone" min="0" max="5" step="0.01" type="range"
+      /></label>
+      <label
+        >Blood: <input name="blood" min="0" max="10" step="0.01" type="range"
+      /></label>
+      <label
+        >Skin: <input name="skin" min="0" max="10" step="0.01" type="range"
+      /></label>
+      <label
+        >Water: <input name="water" min="0" max="10" step="0.01" type="range"
+      /></label>
+      <label
+        >Rotate:
+        <input
+          name="rotate"
+          min="0"
+          max="3.1416"
+          step="0.1"
+          value="0"
+          type="range"
+      /></label>
     </div>
-
   </body>
 </html>
