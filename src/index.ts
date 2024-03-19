@@ -73,7 +73,7 @@ struct Uniforms {
 @fragment
 fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
  let pos = (p.xyz + 1.) / 2. + vec3f(0,0,uniforms.slice);
- let hu = textureSample(volumeTexture, volumeSampler, pos.xzy).r;
+ let hu = textureSample(volumeTexture, volumeSampler, pos.xyz).r;
    let gray = clamp((hu - uniforms.level) / uniforms.width, 0, 1);
    return vec4f(gray, gray, gray, 1);
 }
@@ -162,7 +162,6 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
         },
       ],
     });
-
     pass.setPipeline(pipeline);
     pass.setBindGroup(0, bindGroup);
     pass.draw(6);
