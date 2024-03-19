@@ -79,8 +79,8 @@ fn vertex_shader (@builtin(vertex_index) index: u32) -> Out {
 
 struct Uniforms {
   slice: f32,
-  level: f32,
-  width: f32,
+  bone: f32,
+  blood: f32,
   rotation: f32
 }
 
@@ -112,7 +112,7 @@ fn transfer (hu: f32, light: vec3f, dhu: vec3f) -> vec4f {
     let diffuseIdx = max(0, dot(normal, -light));
     let diffuse = vec4f(diffuseIdx, 0, 0, 1);
     let a = .02 * (hu-13)/75;
-    return diffuse * vec4f(1,0,0,0) * a;
+    return uniforms.blood * diffuse * vec4f(1,0,0,0) * a;
   }
 
   if (300 < hu && hu > 400) {
@@ -122,7 +122,7 @@ fn transfer (hu: f32, light: vec3f, dhu: vec3f) -> vec4f {
 
     let specular = vec4f(pow(max(0, dot(reflect(light, normal), eye)), 5));
 
-    return .1*ambience + .1*diffuse + .02*specular;
+    return uniforms.bone * (.1 * ambience + .1*diffuse + .02*specular);
   }
 
   return vec4f(0);
