@@ -89,29 +89,42 @@ struct Uniforms {
 @group(0) @binding(2) var volumeSampler: sampler;
 
 
-fn transfer (hu: f32) -> vec4f {
+fn transfer (hu: f32, light: vec3f, dhu: vec3f) -> vec4f {
 
-  if (hu < -500) {
-    return vec4f(0);
+  let eye = normalize(vec3f(0,1,0));
+
+  let normal = normalize(dhu);
+
+  if -20 < hu && hu < 20 {
+    let a = .02 * (hu+20) / 40;
+    return vec4f(0,0,1,0) * a;
+    }
+
+  if (-150 < hu && hu < -20) {
+    let diffuseIdx = max(0, dot(normal, -light));
+    let a = 0.01;
+    let diffuse = vec3f(diffuseIdx*255,diffuseIdx*226,diffuseIdx*198) / 255;
+    return vec4(diffuse*a, a);
   }
 
-  if (hu > -120 && hu < -90) {
-    let x = (hu - (-120)) / (-120 - (-90));
-    return .2 * vec4f(x,x,0,x);
+  if (13 < hu && hu < 75) {
+    let diffuseIdx = max(0, dot(normal, -light));
+    let diffuse = vec4f(diffuseIdx, 0, 0, 1);
+    let a = .02 * (hu-13)/75;
+    return diffuse * vec4f(1,0,0,0) * a;
   }
 
-  if (hu > 13 && hu < 50) {
-    let x = (hu - 13) / (50-13);
-    return .02 * vec4f(x, 0, 0, x);
+  if (300 < hu && hu > 400) {
+    let diffuseIdx = max(0, dot(normal, -light));
+    let diffuse = vec4f(diffuseIdx, diffuseIdx, diffuseIdx, .8);
+    let ambience = vec4f(.2, .2, .2, .2);
+
+    let specular = vec4f(pow(max(0, dot(reflect(light, normal), eye)), 5));
+
+    return .1*ambience + .1*diffuse + .02*specular;
   }
 
-  if (hu > 300) {
-    let x = (hu - 300) / (1000 - 300);
-    return .2 * vec4f(x);
-  }
-
-  let x = (hu - uniforms.level) / uniforms.width;
-  return .2 * vec4f(x,x,0,x);
+  return vec4f(0);
 }
 
 
@@ -129,13 +142,25 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
 		  0, 0, 0, 1
   );
 
+  let light = normalize(vec4f(1,0,0,0)).xyz;
+
   for (var i=uniforms.slice; i<1.; i+=0.01) {
     let pos = vec4f((p.xyz + 1.) / 2. + vec3f(0,0,i), 1.);
 
     let offset = vec4(.5,.5,.5,0);
 
-    let hu = textureSample(volumeTexture, volumeSampler, ((M*(pos - offset).xzyw) + offset).xyz).r;
-    let color = transfer(hu);
+    let textureCoord = ((M*(pos - offset).xzyw) + offset).xyz;
+    let hu = textureSample(volumeTexture, volumeSampler, textureCoord).r;
+
+    let h = 0.01;
+
+    let grad = vec3f(
+      (textureSample(volumeTexture, volumeSampler, textureCoord + vec3f(h, 0, 0)).r - hu) / h,
+      (textureSample(volumeTexture, volumeSampler, textureCoord + vec3f(0, h, 0)).r - hu) / h,
+      (textureSample(volumeTexture, volumeSampler, textureCoord + vec3f(0, 0, h)).r - hu) / h
+    );
+
+    let color = transfer(hu, light, grad);
     out = out + (1-out.a) * color;
   }
 
