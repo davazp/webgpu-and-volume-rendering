@@ -1,6 +1,22 @@
 import { getImage } from "./images";
 
 async function main() {
+  const sliders = document.querySelectorAll<HTMLInputElement>(
+    'input[type="range"]',
+  );
+
+  sliders.forEach((slider) => {
+    slider.addEventListener("input", () => {
+      render();
+    });
+  });
+
+  function getUniforms() {
+    return new Float32Array(
+      Array.from(sliders).map((s) => parseFloat(s.value)),
+    );
+  }
+
   const image = await getImage();
   console.log("image", image);
 
@@ -163,14 +179,9 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
   });
 
   const uniformsBuffer = device.createBuffer({
-    size: Float32Array.BYTES_PER_ELEMENT * 4,
+    size: Float32Array.BYTES_PER_ELEMENT * sliders.length,
     usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
   });
-
-  let slice = 0;
-  let width = 400;
-  let level = -120;
-  let rotation = 0;
 
   const bindGroup = device.createBindGroup({
     layout: pipeline.getBindGroupLayout(0),
@@ -193,11 +204,7 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
   });
 
   const render = () => {
-    device.queue.writeBuffer(
-      uniformsBuffer,
-      0,
-      new Float32Array([slice, level, width, rotation]),
-    );
+    device.queue.writeBuffer(uniformsBuffer, 0, getUniforms());
     const encoder = device.createCommandEncoder();
 
     const canvasTexture = ctx.getCurrentTexture();
@@ -220,33 +227,6 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
 
     device.queue.submit([commandBuffer]);
   };
-
-  const slider = document.querySelector<HTMLInputElement>("#slider")!;
-  slider.addEventListener("input", () => {
-    slice = parseFloat(slider.value);
-    render();
-  });
-
-  const sliderLevel =
-    document.querySelector<HTMLInputElement>("#slider-level")!;
-  sliderLevel.addEventListener("input", () => {
-    level = parseFloat(sliderLevel.value);
-    render();
-  });
-
-  const sliderWidth =
-    document.querySelector<HTMLInputElement>("#slider-width")!;
-  sliderWidth.addEventListener("input", () => {
-    width = parseFloat(sliderWidth.value);
-    render();
-  });
-
-  const sliderRotation =
-    document.querySelector<HTMLInputElement>("#slider-rotation")!;
-  sliderRotation.addEventListener("input", () => {
-    rotation = parseFloat(sliderRotation.value);
-    render();
-  });
 
   render();
 }
