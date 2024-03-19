@@ -6,7 +6,10 @@ async function main() {
   );
 
   sliders.forEach((slider) => {
+    slider.value = localStorage.getItem(slider.name) ?? slider.value;
+
     slider.addEventListener("input", () => {
+      localStorage.setItem(slider.name, slider.value);
       render();
     });
   });
@@ -81,6 +84,8 @@ struct Uniforms {
   slice: f32,
   bone: f32,
   blood: f32,
+  skin: f32,
+  water: f32,
   rotation: f32
 }
 
@@ -98,14 +103,14 @@ fn transfer (hu: f32, light: vec3f, dhu: vec3f) -> vec4f {
 
   if -20 < hu && hu < 20 {
     let a = .02 * (hu+20) / 40;
-    return vec4f(0,0,1,0) * a;
-    }
+    return uniforms.water * vec4f(0,0,1,0) * a;
+  }
 
   if (-150 < hu && hu < -20) {
     let diffuseIdx = max(0, dot(normal, -light));
     let a = 0.01;
     let diffuse = vec3f(diffuseIdx*255,diffuseIdx*226,diffuseIdx*198) / 255;
-    return vec4(diffuse*a, a);
+    return uniforms.skin * vec4(diffuse*a, a);
   }
 
   if (13 < hu && hu < 75) {
