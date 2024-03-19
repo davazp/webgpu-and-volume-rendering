@@ -75,6 +75,10 @@ struct Uniforms {
 
 fn transfer (hu: f32) -> vec4f {
 
+  if (hu < -500) {
+    return vec4f(0);
+  }
+
   if (hu > -120 && hu < -90) {
     let x = (hu - (-120)) / (-120 - (-90));
     return .2 * vec4f(x,x,0,x);
@@ -90,7 +94,8 @@ fn transfer (hu: f32) -> vec4f {
     return .2 * vec4f(x);
   }
 
-  return vec4f(0);
+  let x = (hu - uniforms.level) / uniforms.width;
+  return .2 * vec4f(x,x,0,x);
 }
 
 
