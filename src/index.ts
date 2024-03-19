@@ -57,23 +57,23 @@ async function main() {
 
 struct Out {
   @builtin(position) position: vec4f,
-  @location(0) pos: vec4f
+  @location(0) pos: vec2f
 }
 
 @vertex
 fn vertex_shader (@builtin(vertex_index) index: u32) -> Out {
 
    let points = array(
-     vec4f(1,-1,0,1),
-     vec4f(-1,1,0,1),
-     vec4f(-1,-1,0,1),
+     vec2f(1,-1),
+     vec2f(-1,1),
+     vec2f(-1,-1),
 
-     vec4f(1,-1,0,1),
-     vec4f(-1,1,0,1),
-     vec4f(1,1,0,1)
+     vec2f(1,-1),
+     vec2f(-1,1),
+     vec2f(1,1)
    );
 
-   return Out(points[index], points[index]);
+   return Out(vec4f(points[index], 0, 1), points[index]);
 }
 
 
@@ -87,6 +87,7 @@ struct Uniforms {
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var volumeTexture: texture_3d<f32>;
 @group(0) @binding(2) var volumeSampler: sampler;
+
 
 
 fn transfer (hu: f32, light: vec3f, dhu: vec3f) -> vec4f {
@@ -128,44 +129,61 @@ fn transfer (hu: f32, light: vec3f, dhu: vec3f) -> vec4f {
 }
 
 
-@fragment
-fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
+@fragment fn fs(@location(0) pos: vec2f) -> @location(0) vec4f {
+  let uInput = uniforms.rotation;
 
-  var out: vec4f;
+  let center = vec2f(.5, .5);
 
-  let angle = uniforms.rotation * 2 * 3.1416;
+  var ray = vec3f((pos.x + 1.) / 2., uniforms.slice, (pos.y+1.)/2.);
+  let ds = 1./512.;
 
-  let M = mat4x4f(
-		  cos(angle), -sin(angle),  0, 0,
-		  sin(angle), cos(angle),   0, 0,
+  let translate = mat4x4f(
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			-center.x, -center.y, 0, 1,
+  );
+  let invtranslate = mat4x4f(
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			center.x, center.y, 0, 1,
+  );
+
+  let rotate = mat4x4f(
+		  cos(uInput), -sin(uInput),  0, 0,
+		  sin(uInput), cos(uInput),   0, 0,
                   0, 0, 1, 0,
 		  0, 0, 0, 1
   );
 
-  let light = normalize(vec4f(1,0,0,0)).xyz;
+  let M = invtranslate * rotate * translate;
 
-  for (var i=uniforms.slice; i<1.; i+=0.01) {
-    let pos = vec4f((p.xyz + 1.) / 2. + vec3f(0,0,i), 1.);
+  let rayStep = vec3f(0., ds, 0.);
 
-    let offset = vec4(.5,.5,.5,0);
+  var outColor = vec4f(0);
 
-    let textureCoord = ((M*(pos - offset).xzyw) + offset).xyz;
-    let hu = textureSample(volumeTexture, volumeSampler, textureCoord).r;
+  let light = (M * normalize(vec4f(1,0,0,0))).xyz;
 
-    let h = 0.01;
+  for (var i=0; i<512; i++) {
 
-    let grad = vec3f(
-      (textureSample(volumeTexture, volumeSampler, textureCoord + vec3f(h, 0, 0)).r - hu) / h,
-      (textureSample(volumeTexture, volumeSampler, textureCoord + vec3f(0, h, 0)).r - hu) / h,
-      (textureSample(volumeTexture, volumeSampler, textureCoord + vec3f(0, 0, h)).r - hu) / h
+    let point = M * vec4f(ray, 1.);
+
+    let hu = textureSample(volumeTexture, volumeSampler, point.xyz).r;
+    let dhu = vec3f(
+      textureSample(volumeTexture, volumeSampler, point.xyz + vec3f(ds,0,0)).r - hu,
+      textureSample(volumeTexture, volumeSampler, point.xyz + vec3f(0,ds,0)).r - hu,
+      textureSample(volumeTexture, volumeSampler, point.xyz + vec3f(0,0,ds)).r - hu
     );
+    let c = transfer(hu, light.xyz, dhu);
+    outColor = outColor + (1. - outColor.a) * c;
 
-    let color = transfer(hu, light, grad);
-    out = out + (1-out.a) * color;
+    ray += rayStep;
   }
 
-  return out;
+  return outColor;
 }
+
 
 `,
   });
