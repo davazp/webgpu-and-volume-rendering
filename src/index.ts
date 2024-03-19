@@ -2,6 +2,7 @@ import { getImage } from "./images";
 
 async function main() {
   const image = await getImage();
+  console.log("image", image);
 
   const adapter = await navigator.gpu.requestAdapter();
   console.log("adapter", adapter);
@@ -63,19 +64,61 @@ fn vertex_shader (@builtin(vertex_index) index: u32) -> Out {
 struct Uniforms {
   slice: f32,
   level: f32,
-  width: f32
+  width: f32,
+  rotation: f32
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var volumeTexture: texture_3d<f32>;
 @group(0) @binding(2) var volumeSampler: sampler;
 
+
+fn transfer (hu: f32) -> vec4f {
+
+  if (hu > -120 && hu < -90) {
+    let x = (hu - (-120)) / (-120 - (-90));
+    return .2 * vec4f(x,x,0,x);
+  }
+
+  if (hu > 13 && hu < 50) {
+    let x = (hu - 13) / (50-13);
+    return .02 * vec4f(x, 0, 0, x);
+  }
+
+  if (hu > 300) {
+    let x = (hu - 300) / (1000 - 300);
+    return .2 * vec4f(x);
+  }
+
+  return vec4f(0);
+}
+
+
 @fragment
 fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
- let pos = (p.xyz + 1.) / 2. + vec3f(0,0,uniforms.slice);
- let hu = textureSample(volumeTexture, volumeSampler, pos.xyz).r;
-   let gray = clamp((hu - uniforms.level) / uniforms.width, 0, 1);
-   return vec4f(gray, gray, gray, 1);
+
+  var out: vec4f;
+
+  let angle = uniforms.rotation * 2 * 3.1416;
+
+  let M = mat4x4f(
+		  cos(angle), -sin(angle),  0, 0,
+		  sin(angle), cos(angle),   0, 0,
+                  0, 0, 1, 0,
+		  0, 0, 0, 1
+  );
+
+  for (var i=uniforms.slice; i<1.; i+=0.01) {
+    let pos = vec4f((p.xyz + 1.) / 2. + vec3f(0,0,i), 1.);
+
+    let offset = vec4(.5,.5,.5,0);
+
+    let hu = textureSample(volumeTexture, volumeSampler, ((M*(pos - offset).xzyw) + offset).xyz).r;
+    let color = transfer(hu);
+    out = out + (1-out.a) * color;
+  }
+
+  return out;
 }
 
 `,
@@ -115,13 +158,14 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
   });
 
   const uniformsBuffer = device.createBuffer({
-    size: Float32Array.BYTES_PER_ELEMENT * 3,
+    size: Float32Array.BYTES_PER_ELEMENT * 4,
     usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
   });
 
-  let slice = 10;
+  let slice = 0;
   let width = 400;
   let level = -120;
+  let rotation = 0;
 
   const bindGroup = device.createBindGroup({
     layout: pipeline.getBindGroupLayout(0),
@@ -147,7 +191,7 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
     device.queue.writeBuffer(
       uniformsBuffer,
       0,
-      new Float32Array([slice, level, width]),
+      new Float32Array([slice, level, width, rotation]),
     );
     const encoder = device.createCommandEncoder();
 
@@ -189,6 +233,13 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
     document.querySelector<HTMLInputElement>("#slider-width")!;
   sliderWidth.addEventListener("input", () => {
     width = parseFloat(sliderWidth.value);
+    render();
+  });
+
+  const sliderRotation =
+    document.querySelector<HTMLInputElement>("#slider-rotation")!;
+  sliderRotation.addEventListener("input", () => {
+    rotation = parseFloat(sliderRotation.value);
     render();
   });
 
