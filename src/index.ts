@@ -80,7 +80,10 @@ fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
 `,
   });
 
-  const volumeSampler = device.createSampler();
+  const volumeSampler = device.createSampler({
+    minFilter: "linear",
+    magFilter: "linear",
+  });
 
   const volumeTexture = device.createTexture({
     format: "r32float",
