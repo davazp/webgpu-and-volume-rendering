@@ -43,16 +43,6 @@ struct Out {
   @location(0) pos: vec4f
 }
 
-struct Uniforms {
-  slice: f32,
-  level: f32,
-  width: f32
-}
-
-@group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var volumeTexture: texture_3d<f32>;
-@group(0) @binding(2) var volumeSampler: sampler;
-
 @vertex
 fn vertex_shader (@builtin(vertex_index) index: u32) -> Out {
 
@@ -68,6 +58,17 @@ fn vertex_shader (@builtin(vertex_index) index: u32) -> Out {
 
    return Out(points[index], points[index]);
 }
+
+
+struct Uniforms {
+  slice: f32,
+  level: f32,
+  width: f32
+}
+
+@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var volumeTexture: texture_3d<f32>;
+@group(0) @binding(2) var volumeSampler: sampler;
 
 @fragment
 fn fragment_shader (@location(0) p: vec4f) -> @location(0) vec4f {
