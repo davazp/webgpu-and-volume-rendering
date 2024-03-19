@@ -16,7 +16,7 @@ app.get("/:imageId", (req, res, next) => {
       res.send(Buffer.from(volume.buffer));
     })
     .catch((err) => {
-      console.log("or error");
+      console.error(err);
       next(err);
     });
 });

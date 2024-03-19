@@ -150,28 +150,6 @@ function readSingleImage(buffer: ArrayBuffer) {
     throw new Error(`Missing required Rows tag.`);
   }
 
-  const sliceLocation = dataset.floatString(Tags.SliceLocation);
-  if (sliceLocation === undefined) {
-    throw new Error(`Missing slice location tag`);
-  }
-
-  const bitsAllocated = dataset.uint16(Tags.BitsAllocated);
-  if (bitsAllocated !== 16) {
-    throw new Error(`Unsupported BitsAllocated ${bitsAllocated}`);
-  }
-
-  const pixelRepresentation = dataset.uint16(Tags.PixelRepresentation);
-  if (pixelRepresentation !== 0) {
-    throw new Error(`Signed image is not supported.`);
-  }
-
-  const pixelSpacingX = dataset.floatString(Tags.PixelSpacing, 0);
-  const pixelSpacingY = dataset.floatString(Tags.PixelSpacing, 1);
-  if (pixelSpacingX === undefined || pixelSpacingY === undefined) {
-    throw new Error(`Missing pixel spacing`);
-  }
-  const pixelSpacing: [number, number] = [pixelSpacingX, pixelSpacingY];
-
   const positionPatientL = dataset.floatString(Tags.ImagePositionPatient, 0);
   const positionPatientP = dataset.floatString(Tags.ImagePositionPatient, 1);
   const positionPatientS = dataset.floatString(Tags.ImagePositionPatient, 2);
@@ -183,6 +161,26 @@ function readSingleImage(buffer: ArrayBuffer) {
   ) {
     throw new Error(`Missing image position patient`);
   }
+
+  const sliceLocation =
+    dataset.floatString(Tags.SliceLocation) ?? positionPatientS;
+  if (sliceLocation === undefined) {
+    throw new Error(`Missing slice location tag`);
+  }
+
+  const bitsAllocated = dataset.uint16(Tags.BitsAllocated);
+  if (bitsAllocated !== 16) {
+    throw new Error(`Unsupported BitsAllocated ${bitsAllocated}`);
+  }
+
+  const pixelRepresentation = dataset.uint16(Tags.PixelRepresentation);
+
+  const pixelSpacingX = dataset.floatString(Tags.PixelSpacing, 0);
+  const pixelSpacingY = dataset.floatString(Tags.PixelSpacing, 1);
+  if (pixelSpacingX === undefined || pixelSpacingY === undefined) {
+    throw new Error(`Missing pixel spacing`);
+  }
+  const pixelSpacing: [number, number] = [pixelSpacingX, pixelSpacingY];
 
   const positionPatient: Vec3 = [
     positionPatientL,
@@ -219,7 +217,9 @@ function readSingleImage(buffer: ArrayBuffer) {
     throw new Error(`Missing pixel data`);
   }
 
-  const pixelData = new Uint16Array(
+  let arrayType = pixelRepresentation === 0 ? Uint16Array : Int16Array;
+
+  const pixelData = new arrayType(
     dataset.byteArray.buffer.slice(
       pixelDataElement.dataOffset,
       pixelDataElement.dataOffset + pixelDataElement.length,
