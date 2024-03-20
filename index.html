@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>WebGPU And Volume Rendering Workshop</title>
+    <script type="module" src="src/index.ts"></script>
+    <style>
+      html,
+      body {
+        background-color: black;
+      }
+      .canvas-container {
+        display: flex;
+      }
+      canvas {
+        margin: 0 auto;
+      }
+      .controls {
+        background-color: rgb(0, 0, 0, 0.5);
+        padding: 10px;
+        color: white;
+	width: 40%;
+      }
+      .controls span {
+	  width: 60px;
+      }
+      .controls input {
+         flex-grow: 1;
+      }
+      .controls label {
+         display: flex;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="canvas-container">
+      <canvas width="500" height="500" id="canvas"></canvas>
+    </div>
+
+    <div class="controls">
+      <label>
+	<span>Red:</span>
+        <input name="red" min="0" value="0" max="1" step="0.01" type="range" />
+      </label>
+    </div>
+  </body>
+</html>
