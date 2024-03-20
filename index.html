@@ -14,45 +14,52 @@
       }
       canvas {
         margin: 0 auto;
-        width: 600px;
-        height: 600px;
       }
       .controls {
         background-color: rgb(0, 0, 0, 0.5);
         padding: 10px;
         color: white;
+	width: 40%;
+      }
+      .controls span {
+	  width: 60px;
       }
       .controls input {
-        width: 50%;
+         flex-grow: 1;
       }
       .controls label {
-        display: flex;
-        display: block;
+         display: flex;
       }
     </style>
   </head>
   <body>
     <div class="canvas-container">
-      <canvas width="600" height="600" id="canvas"></canvas>
+      <canvas width="500" height="500" id="canvas"></canvas>
     </div>
 
     <div class="controls">
-      <label>Slice:
+      <label>
+	<span>Slice:</span>
         <input name="slice" min="0" value="0" max="1" step="0.01" type="range" />
       </label>
-      <label>Bone:
+      <label>
+	<span>Bone:</span>
 	<input name="bone" min="0" max="5" step="0.01" type="range" />
       </label>
-      <label>lood:
+      <label>
+	<span>Blood:</span>
 	<input name="blood" min="0" max="10" step="0.01" type="range" />
       </label>
-      <label>Skin:
+      <label>
+	<span>Skin:</span>
 	<input name="skin" min="0" max="10" step="0.01" type="range" />
       </label>
-      <label>Water:
+      <label>
+	<span>Water:</span>
 	<input name="water" min="0" max="10" step="0.01" type="range" />
       </label>
-      <label>Rotate:
+      <label>
+	<span>Rotate:</span>
 	<input name="rotate" min="0" max="3.1416" step="0.1" value="0" type="range" />
       </label>
     </div>
