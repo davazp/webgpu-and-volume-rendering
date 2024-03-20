@@ -7,8 +7,12 @@ const app = express();
 
 const DATA_DIR = path.join(__dirname, "../../data/");
 
-app.get("/:imageId", (req, res, next) => {
-  console.log(`GET ${req.path}`);
+app.use((req, _res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
+});
+
+app.get("/api/image/:imageId", (req, res, next) => {
   getImages(req.params.imageId)
     .then((image) => {
       const { volume, ...metadata } = image;

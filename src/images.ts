@@ -1,7 +1,7 @@
 import { ImageVolume } from "./api/types";
 
 export async function getImage(): Promise<ImageVolume> {
-  const response = await fetch("/api/eclipse-10.0.42-fsrt-brain");
+  const response = await fetch("/api/image/eclipse-10.0.42-fsrt-brain");
   const arrayBuffer = await response.arrayBuffer();
   const volume = new Float32Array(arrayBuffer);
 
