@@ -8,6 +8,7 @@ const app = express();
 const DATA_DIR = path.join(__dirname, "../../data/");
 
 app.get("/:imageId", (req, res, next) => {
+  console.log(`GET ${req.path}`);
   getImages(req.params.imageId)
     .then((image) => {
       const { volume, ...metadata } = image;
