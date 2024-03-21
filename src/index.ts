@@ -76,6 +76,15 @@ async function main() {
     usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
   });
 
+  const volumeTexture = device.createTexture({
+    format: "r32float",
+    usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING,
+    dimension: "3d",
+    size: [image.columns, image.rows, image.slices],
+  });
+
+  const sampler = device.createSampler();
+
   const bindGroup = device.createBindGroup({
     layout: pipeline.getBindGroupLayout(0),
     entries: [
@@ -85,8 +94,26 @@ async function main() {
           buffer: uniformsBuffer,
         },
       },
+      {
+        binding: 1,
+        resource: volumeTexture.createView(),
+      },
+      {
+        binding: 2,
+        resource: sampler,
+      },
     ],
   });
+
+  device.queue.writeTexture(
+    { texture: volumeTexture },
+    image.volume,
+    {
+      bytesPerRow: image.columns * Float32Array.BYTES_PER_ELEMENT,
+      rowsPerImage: image.rows,
+    },
+    [image.columns, image.rows, image.slices],
+  );
 
   const render = () => {
     device.queue.writeBuffer(uniformsBuffer, 0, getUniforms());
